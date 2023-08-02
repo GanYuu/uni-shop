@@ -1,10 +1,10 @@
 <template>
 	<view>
 		<view class="goods-list">
-			<block v-for="(item, i) in goodsList" :key="i" @click="gotoDetail(item)">
+			<view v-for="(item, i) in goodsList" :key="i" @click="gotoDetail(item)">
 				<!-- 为 my-goods 组件动态绑定 goods 属性的值 -->
 				<my-goods :goods="item"></my-goods>
-			</block>
+			</view>
 		    </view>
 	</view>
 </template>
@@ -36,6 +36,7 @@
 		methods: {
 			// 点击跳转到商品详情页面
 			gotoDetail(item) {
+				console.log(item);
 			  uni.navigateTo({
 			    url: '/subpkg/goods_detail/goods_detail?goods_id=' + item.goods_id
 			  })
@@ -73,6 +74,7 @@
 		},
 		// 下拉刷新的事件
 		onPullDownRefresh() {
+			console.log('下拉刷新');
 		  // 1. 重置关键数据
 		  this.queryObj.pagenum = 1
 		  this.total = 0
