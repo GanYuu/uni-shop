@@ -21,24 +21,50 @@
 				</view>
 			</view>
 			<!-- 运费 -->
-			<view class="yf">快递：免运费</view>
+			<view class="yf">快递：免运费 -- {{cart.length}}</view>
 			<!-- 商品详情信息 -->
 			<rich-text :nodes="goods_info.goods_introduce"></rich-text>
 			<!-- 商品导航组件 -->
 			<view class="goods_nav">
-			  <!-- fill 控制右侧按钮的样式 -->
-			  <!-- options 左侧按钮的配置项 -->
-			  <!-- buttonGroup 右侧按钮的配置项 -->
-			  <!-- click 左侧按钮的点击事件处理函数 -->
-			  <!-- buttonClick 右侧按钮的点击事件处理函数 -->
-			  <uni-goods-nav :fill="true" :options="options" :buttonGroup="buttonGroup" @click="onClick" @buttonClick="buttonClick" />
+				<!-- fill 控制右侧按钮的样式 -->
+				<!-- options 左侧按钮的配置项 -->
+				<!-- buttonGroup 右侧按钮的配置项 -->
+				<!-- click 左侧按钮的点击事件处理函数 -->
+				<!-- buttonClick 右侧按钮的点击事件处理函数 -->
+				<uni-goods-nav :fill="true" :options="options" :buttonGroup="buttonGroup" @click="onClick"
+					@buttonClick="buttonClick" />
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
+	import {
+		mapState,
+		mapMutations,
+		mapGetters
+	} from 'vuex'
+
 	export default {
+		computed: {
+			...mapState('m_cart', ['cart']),
+			...mapGetters('m_cart', ['total'])
+		},
+		watch: {
+			// 1. 监听 total 值的变化，通过第一个形参得到变化后的新值
+			total: {
+				handler(newVal) {
+					// 2. 通过数组的 find() 方法，找到购物车按钮的配置对象
+					const findResult = this.options.find((x) => x.text === '购物车')
+
+					if (findResult) {
+						// 3. 动态为购物车按钮的 info 属性赋值
+						findResult.info = newVal
+					}
+				},
+				immediate:true
+			}
+		},
 		data() {
 			return {
 				goods_info: {},
@@ -65,6 +91,7 @@
 			};
 		},
 		methods: {
+			...mapMutations('m_cart', ['addToCart']),
 			// 定义请求商品详情数据的方法
 			async getGoodsDetail(goods_id) {
 				const {
@@ -88,20 +115,47 @@
 			// 左侧按钮的点击事件处理函数
 			onClick(e) {
 				console.log(e);
-			  if (e.content.text === '购物车') {
-			    // 切换到购物车页面
-			    uni.switchTab({
-			      url: '/pages/cart/cart'
-			    })
-			  }
+				if (e.content.text === '购物车') {
+					// 切换到购物车页面
+					uni.switchTab({
+						url: '/pages/cart/cart'
+					})
+				}
 			},
-			buttonClick(e){
-				console.log(e);
-			}
+			// 右侧按钮的点击事件处理函数
+			buttonClick(e) {
+				// 1. 判断是否点击了 加入购物车 按钮
+				if (e.content.text === '加入购物车') {
+
+					// 2. 组织一个商品的信息对象
+					const goods = {
+						goods_id: this.goods_info.goods_id, // 商品的Id
+						goods_name: this.goods_info.goods_name, // 商品的名称
+						goods_price: this.goods_info.goods_price, // 商品的价格
+						goods_count: 1, // 商品的数量
+						goods_small_logo: this.goods_info.goods_small_logo, // 商品的图片
+						goods_state: true // 商品的勾选状态
+					}
+					console.log(e);
+					// 3. 通过 this 调用映射过来的 addToCart 方法，把商品信息对象存储到购物车中
+					this.addToCart(goods)
+
+				}
+			},
+			setBadge() {
+					// 调用 uni.setTabBarBadge() 方法，为购物车设置右上角的徽标
+					uni.setTabBarBadge({
+						 index: 2, // 索引
+						 text: this.total + '' // 注意：text 的值必须是字符串，不能是数字
+					})
+			 }
 		},
 		onLoad(options) {
 			const goods_id = options.goods_id
 			this.getGoodsDetail(goods_id)
+		},
+		onShow(){
+			this.setBadge()
 		}
 	}
 </script>
@@ -155,17 +209,19 @@
 			font-size: 12px;
 			color: gray;
 		}
+
 		.goods-detail-container {
-		  // 给页面外层的容器，添加 50px 的内padding，
-		  // 防止页面内容被底部的商品导航组件遮盖
-		  padding-bottom: 50px;
+			// 给页面外层的容器，添加 50px 的内padding，
+			// 防止页面内容被底部的商品导航组件遮盖
+			padding-bottom: 50px;
 		}
+
 		.goods_nav {
-		  // 为商品导航组件添加固定定位
-		  position: fixed;
-		  bottom: 0;
-		  left: 0;
-		  width: 100%;
+			// 为商品导航组件添加固定定位
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
 		}
 	}
 </style>

@@ -70,6 +70,15 @@
 			};
 		},
 		watch: {
+			inputValue(newVal, oldVal) {
+			  // 官方提供的 if 判断条件，在用户每次输入内容时，都会调用 this.$emit("change", newVal)
+			  // if (+newVal !== +oldVal) {
+			
+			  // 新旧内容不同 && 新值内容合法 && 新值中不包含小数点
+			  if (+newVal !== +oldVal && Number(newVal) && String(newVal).indexOf('.') === -1) {
+			    this.$emit("change", newVal);
+			  }
+			},
 			value(val) {
 				this.inputValue = +val;
 			},
@@ -130,12 +139,16 @@
 				return scale;
 			},
 			_onBlur(event) {
+				// 将用户输入的内容转化为整数
 				this.$emit('blur', event)
-				let value = event.detail.value;
-				if (isNaN(value)) {
-					this.inputValue = this.min;
+				let value = parseInt(event.detail.value);
+							
+				if (!value) {
+					// 如果转化之后的结果为 NaN，则给定默认值为 1
+					this.inputValue = 1;
 					return;
 				}
+				
 				value = +value;
 				if (value > this.max) {
 					value = this.max;
